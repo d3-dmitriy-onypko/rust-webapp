@@ -26,6 +26,9 @@ jobs:
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -35,13 +38,15 @@ jobs:
           components: rustfmt
       - uses: actions-rs/cargo@v1
         with:
-          path: app/
           command: fmt
           args: --all -- --check
 
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -51,13 +56,15 @@ jobs:
           components: clippy
       - uses: actions-rs/clippy-check@v1
         with:
-          path: app/
           token: ${{ secrets.GITHUB_TOKEN }}
           args: -- -D warnings
 
   coverage:
     name: Code coverage
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -71,5 +78,4 @@ jobs:
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
-          path: app/
           args: '--ignore-tests'
