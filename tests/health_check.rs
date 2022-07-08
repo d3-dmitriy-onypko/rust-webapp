@@ -1,14 +1,11 @@
 //! tests/health_check.rs
-// `actix_rt::test` is the testing equivalent of `actix_web::main`. // It also spares you from having to specify the `#[test]` attribute. //
-// Use `cargo add actix-rt --dev --vers 2` to add `actix-rt`
-// under `[dev-dependencies]` in Cargo.toml
-//
-// You can inspect what code gets generated using
-// `cargo expand --test health_check` (<- name of the test file) #[actix_rt::test]
-#[actix_rt::test]
+
+use std::net::TcpListener;
+#[tokio::test]
 async fn health_check_works() {
     // Arrange
-    spawn_app();
+    let address = spawn_app();
+
     // We need to bring in `reqwest`
     // to perform HTTP requests against our application.
     //
@@ -16,7 +13,7 @@ async fn health_check_works() {
     let client = reqwest::Client::new();
     // Act
     let response = client
-        .get("http://127.0.0.1:8080/health_check")
+        .get(format!("{}/health_check", address))
         .send()
         .await
         .expect("Failed to execute request.");
@@ -25,7 +22,11 @@ async fn health_check_works() {
     assert_eq!(Some(0), response.content_length());
 }
 // Launch our application in the background ~somehow~
-fn spawn_app() {
-    let server = app::run("127.0.0.1:0").expect("Failed to bind to address");
+fn spawn_app() -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind");
+    let port = listener.local_addr().unwrap().port();
+    let server = app::run(listener).expect("Failed to bind to address");
     let _ = tokio::spawn(server);
+
+    format!("http://127.0.0.1:{}", port)
 }
