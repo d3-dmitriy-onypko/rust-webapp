@@ -10,7 +10,6 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("failed to connetect to postgres");
     let address = format!("127.0.0.1:{}", configuration.application_port);
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", configuration.application_port))
-        .expect("failed to bind");
+    let listener = TcpListener::bind(address).expect("failed to bind");
     run(listener, db_pool)?.await
 }
