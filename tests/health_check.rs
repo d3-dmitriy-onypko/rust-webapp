@@ -4,7 +4,7 @@ use std::net::TcpListener;
 
 use app::configuration::{get_configuration, Settings};
 use reqwest::Client;
-use sqlx::{Connection, PgConnection};
+use sqlx::{Connection, PgConnection, PgPool};
 use tokio::runtime::Runtime;
 #[tokio::test]
 async fn health_check_works() {
@@ -114,10 +114,10 @@ impl WebTest {
 async fn spawn_app(settings: &Settings) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind");
     let port = listener.local_addr().unwrap().port();
-    let connection = PgConnection::connect(&settings.database.connection_string())
+    let connection_pool = PgPool::connect(&settings.database.connection_string())
         .await
         .expect("connected");
-    let server = app::startup::run(listener, connection).expect("Failed to bind to address");
+    let server = app::startup::run(listener, connection_pool).expect("Failed to bind to address");
     let _ = tokio::spawn(server);
 
     format!("http://127.0.0.1:{}", port)
