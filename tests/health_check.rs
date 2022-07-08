@@ -114,7 +114,7 @@ impl WebTest {
 async fn spawn_app(settings: &Settings) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind");
     let port = listener.local_addr().unwrap().port();
-    let mut connection = PgConnection::connect(&settings.database.connection_string())
+    let connection = PgConnection::connect(&settings.database.connection_string())
         .await
         .expect("connected");
     let server = app::startup::run(listener, connection).expect("Failed to bind to address");
