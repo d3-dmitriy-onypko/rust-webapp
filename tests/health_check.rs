@@ -2,13 +2,18 @@
 
 use std::net::TcpListener;
 
-use app::configuration::get_configuration;
+use app::configuration::{get_configuration, Settings};
 use reqwest::Client;
 use sqlx::{Connection, PgConnection};
+use tokio::runtime::Runtime;
 #[tokio::test]
 async fn health_check_works() {
     // Arrange
-    let address = spawn_app();
+    let WebTest {
+        address,
+        client,
+        settings,
+    } = WebTest::new().await;
 
     // We need to bring in `reqwest`
     // to perform HTTP requests against our application.
@@ -28,7 +33,11 @@ async fn health_check_works() {
 
 #[tokio::test]
 async fn subscribe_returns_a_400_for_valid_for_data() {
-    let WebTest { address, client } = WebTest::new();
+    let WebTest {
+        address,
+        client,
+        settings,
+    } = WebTest::new().await;
 
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
@@ -56,9 +65,12 @@ async fn subscribe_returns_a_400_for_valid_for_data() {
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_for_data() {
-    let WebTest { address, client } = WebTest::new();
-    let configuration = get_configuration().expect("failed to read config");
-    let connection_string = configuration.database.connection_string();
+    let WebTest {
+        address,
+        client,
+        settings,
+    } = WebTest::new().await;
+    let connection_string = settings.database.connection_string();
     let mut connection = PgConnection::connect(&connection_string)
         .await
         .expect("Failed to connect to db");
@@ -84,22 +96,28 @@ async fn subscribe_returns_a_200_for_valid_for_data() {
 struct WebTest {
     address: String,
     client: Client,
+    settings: Settings,
 }
 
 impl WebTest {
-    fn new() -> WebTest {
+    async fn new() -> WebTest {
+        let configuration = get_configuration().expect("failed to read config");
         WebTest {
-            address: spawn_app(),
+            address: spawn_app(&configuration).await,
             client: reqwest::Client::new(),
+            settings: configuration,
         }
     }
 }
 
 // Launch our application in the background ~somehow~
-fn spawn_app() -> String {
+async fn spawn_app(settings: &Settings) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind");
     let port = listener.local_addr().unwrap().port();
-    let server = app::startup::run(listener).expect("Failed to bind to address");
+    let mut connection = PgConnection::connect(&settings.database.connection_string())
+        .await
+        .expect("connected");
+    let server = app::startup::run(listener, connection).expect("Failed to bind to address");
     let _ = tokio::spawn(server);
 
     format!("http://127.0.0.1:{}", port)
