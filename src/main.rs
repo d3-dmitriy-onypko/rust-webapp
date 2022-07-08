@@ -1,8 +1,14 @@
-use std::net::TcpListener;
+use std::{fmt::format, net::TcpListener};
 
-use app::startup::run;
+use app::{configuration::get_configuration, startup::run};
 
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    run(TcpListener::bind("127.0.0.1:0").expect("failed to bind"))?.await
+    let configuration = get_configuration().expect("Failed to read configuration");
+    dbg!(&configuration);
+    run(
+        TcpListener::bind(format!("127.0.0.1:{}", configuration.application_port))
+            .expect("failed to bind"),
+    )?
+    .await
 }

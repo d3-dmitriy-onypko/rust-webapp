@@ -2,7 +2,9 @@
 
 use std::net::TcpListener;
 
+use app::configuration::get_configuration;
 use reqwest::Client;
+use sqlx::{Connection, PgConnection};
 #[tokio::test]
 async fn health_check_works() {
     // Arrange
@@ -55,6 +57,11 @@ async fn subscribe_returns_a_400_for_valid_for_data() {
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_for_data() {
     let WebTest { address, client } = WebTest::new();
+    let configuration = get_configuration().expect("failed to read config");
+    let connection_string = configuration.database.connection_string();
+    let connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("Failed to connect to db");
 
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
