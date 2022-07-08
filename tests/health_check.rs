@@ -26,6 +26,6 @@ async fn health_check_works() {
 }
 // Launch our application in the background ~somehow~
 fn spawn_app() {
-    let server = app::run().expect("Failed to bind to address");
+    let server = app::run("127.0.0.1:0").expect("Failed to bind to address");
     let _ = tokio::spawn(server);
 }
