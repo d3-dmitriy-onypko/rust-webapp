@@ -42,9 +42,13 @@ async fn subscribe_returns_a_400_for_valid_for_data() {
             .send()
             .await
             .expect("failed to execute request");
-        
-        assert_eq!(400, response.status().as_u16(),
-    "The APi did not fail with 400 Bad Request when payload was {}", error_message)
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The APi did not fail with 400 Bad Request when payload was {}",
+            error_message
+        )
     }
 }
 
@@ -83,7 +87,7 @@ impl WebTest {
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind");
     let port = listener.local_addr().unwrap().port();
-    let server = app::run(listener).expect("Failed to bind to address");
+    let server = app::startup::run(listener).expect("Failed to bind to address");
     let _ = tokio::spawn(server);
 
     format!("http://127.0.0.1:{}", port)

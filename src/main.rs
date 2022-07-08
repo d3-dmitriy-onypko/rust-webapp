@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use app::run;
+use app::startup::run;
 
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
