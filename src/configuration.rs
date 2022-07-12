@@ -1,7 +1,5 @@
 //! src/configuration.rs
 
-use std::io::Error;
-
 use config::Config;
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct Settings {
