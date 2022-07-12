@@ -5,21 +5,18 @@ use sqlx::PgPool;
 use tracing::Instrument;
 use uuid::Uuid;
 
-pub async fn subscribe(form: web::Form<FormData>, poll: web::Data<PgPool>) -> HttpResponse {
-    let request_id = Uuid::new_v4();
-    // Spans, like logs, have an associated level
-    // `info_span` creates a span at the info-level
-    let request_span = tracing::info_span!(
-    "Adding a new subscriber.",
-    %request_id,
-    subscriber_email = %form.email,
-    subscriber_name= %form.name
-    );
-    // Using `enter` in an async function is a recipe for disaster!
-    // Bear with me for now, but don't do this at home.
-    // See the following section on `tracing-futures`
-    let _request_span_guard = request_span.enter();
+#[tracing::instrument(
+    name = "Adding a new subscriber",
+    skip(form, pool),
+    fields(
+        request_id = %Uuid::new_v4(),
+        subscriber_email = %form.email,
+        subscriber_name = %form.name
+    )
+)]
+pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
     let query_span = tracing::info_span!("Saving new subscriber details in the database");
+
     match sqlx::query!(
         r#"
         insert into subscriptions(id, email, name, subscribed_at) 
@@ -30,7 +27,7 @@ pub async fn subscribe(form: web::Form<FormData>, poll: web::Data<PgPool>) -> Ht
         form.name,
         Utc::now()
     )
-    .execute(poll.get_ref())
+    .execute(pool.get_ref())
     .instrument(query_span)
     .await
     {
