@@ -2,10 +2,19 @@
 
 use std::net::TcpListener;
 
-use app::configuration::{get_configuration, DatabaseSettings, Settings};
+use app::{
+    configuration::{get_configuration, DatabaseSettings, Settings},
+    telemetry::{get_subscriber, init_subscriber},
+};
+use once_cell::sync::Lazy;
 use reqwest::Client;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use tokio::runtime::Runtime;
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let subscriber = get_subscriber("test".into(), "debug".into());
+    init_subscriber(subscriber);
+});
+
 #[tokio::test]
 async fn health_check_works() {
     // Arrange
@@ -115,6 +124,7 @@ impl WebTest {
 
 // Launch our application in the background ~somehow~
 async fn spawn_app(settings: &Settings) -> String {
+    Lazy::force(&TRACING);
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind");
     let port = listener.local_addr().unwrap().port();
     let mut settings = settings.to_owned();
