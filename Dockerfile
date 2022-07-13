@@ -1,13 +1,21 @@
+# syntax=docker/dockerfile:1.4.1
 FROM rust:latest as builder
-WORKDIR /usr/app
-COPY . .
+
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    cargo install cargo-strip
+COPY . /app/
+RUN ls -la
 ENV SQLX_OFFLINE true
-RUN cargo build --release
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    cargo build --release && \
+    cargo strip 
 
 FROM gcr.io/distroless/cc
-WORKDIR /usr/
 
-COPY --from=builder /usr/app/target/release/app /usr/app
+COPY --from=builder /app/target/release/app /
 
 # When `docker run` is executed, launch the binary!
-ENTRYPOINT ["./usr/app"]
+ENTRYPOINT ["./app"]
