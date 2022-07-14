@@ -17,5 +17,4 @@ FROM gcr.io/distroless/cc
 
 COPY --from=builder /app/target/release/app /
 
-# When `docker run` is executed, launch the binary!
 ENTRYPOINT ["./app"]
