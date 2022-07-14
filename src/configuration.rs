@@ -4,7 +4,7 @@ use config::Config;
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
-    pub application_port: u16,
+    pub application: ApplicationSettings,
 }
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct DatabaseSettings {
@@ -13,6 +13,12 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct ApplicationSettings {
+    pub host: String,
+    pub port: u16,
 }
 
 impl DatabaseSettings {
